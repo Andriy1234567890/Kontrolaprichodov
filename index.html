@@ -107,11 +107,17 @@
     });
 
     function selectUser(index) {
-      currentUser = workers[index];
-      document.getElementById('login-section').classList.remove('hidden');
-      document.getElementById('attendance-section').classList.add('hidden');
-      document.getElementById('user-name').textContent = currentUser.name;
-    }
+  currentUser = workers[index];
+  document.getElementById('login-section').classList.remove('hidden');
+  document.getElementById('attendance-section').classList.add('hidden');
+  document.getElementById('user-name').textContent = currentUser.name;
+
+  // Закриття меню на мобільному
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+  }
+}
+
 
     document.getElementById('login-btn').addEventListener('click', () => {
       const inputPass = document.getElementById('password-input').value;

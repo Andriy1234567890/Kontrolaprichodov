@@ -115,28 +115,31 @@
 
     let currentUser = null;
 
-    const userList = document.getElementById('user-list');
-    workers.forEach((user, index) => {
-      const btn = document.createElement('button');
-      btn.textContent = user.name;
-      btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200 rounded';
-      btn.onclick = () => selectUser(index);
-      userList.appendChild(btn);
-    });
+   const userList = document.getElementById('user-list');
 
-    // Додаємо кнопку Адміністратор
-    const adminBtn = document.createElement('button');
-    adminBtn.textContent = 'Адміністратор';
-    adminBtn.className = 'block w-full text-left px-4 py-2 bg-red-100 hover:bg-red-200 rounded';
-    adminBtn.onclick = () => {
-      const pass = prompt('Введіть пароль адміністратора:');
-      if (pass === 'admin123') {
-        showAdminReport();
-      } else {
-        alert('Невірний пароль!');
-      }
-    };
-    userList.appendChild(adminBtn);
+// Спочатку додаємо всіх працівників
+workers.forEach((user, index) => {
+  const btn = document.createElement('button');
+  btn.textContent = user.name;
+  btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200 rounded';
+  btn.onclick = () => selectUser(index);
+  userList.appendChild(btn);
+});
+
+// Потім додаємо кнопку "Адміністратор"
+const adminBtn = document.createElement('button');
+adminBtn.textContent = 'Адміністратор';
+adminBtn.className = 'block w-full text-left px-4 py-2 bg-red-100 hover:bg-red-200 rounded mt-4';
+adminBtn.onclick = () => {
+  const pass = prompt('Введіть пароль адміністратора:');
+  if (pass === 'admin123') {
+    showAdminReport();
+  } else {
+    alert('Невірний пароль!');
+  }
+};
+userList.appendChild(adminBtn);
+
 
     function selectUser(index) {
       currentUser = workers[index];

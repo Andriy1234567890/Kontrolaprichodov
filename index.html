@@ -33,6 +33,7 @@
     </div>
 
     <div id="login-section" class="space-y-4">
+      <select id="user-select" class="border p-2 rounded w-full max-w-sm"></select>
       <input
         type="password"
         id="password-input"
@@ -123,8 +124,21 @@
     });
 
     document.getElementById('admin-login').addEventListener('click', async () => {
-      const pass = document.getElementById('admin-password').value;
-      if (pass === 'admin123') {
+      const inputPass = document.getElementById('admin-password').value;
+
+      const { data, error } = await supabase
+        .from('admin')
+        .select('password')
+        .eq('id', 1)
+        .single();
+
+      if (error) {
+        document.getElementById('admin-message').textContent = 'Помилка підключення.';
+        document.getElementById('admin-message').classList.add('text-red-600');
+        return;
+      }
+
+      if (data.password === inputPass) {
         document.getElementById('admin-panel').classList.remove('hidden');
         document.getElementById('admin-message').textContent = '';
         loadEmployeeSummary();
@@ -187,6 +201,34 @@
         tbody.appendChild(tr);
       });
     }
+
+    // Load employee names into sidebar and dropdown
+    async function loadUsers() {
+      const { data, error } = await supabase.from('users').select();
+      if (error) return console.error(error);
+
+      const userList = document.getElementById('user-list');
+      const userSelect = document.getElementById('user-select');
+      userList.innerHTML = '';
+      userSelect.innerHTML = '<option disabled selected>Оберіть працівника</option>';
+
+      data.forEach(user => {
+        const btn = document.createElement('button');
+        btn.textContent = user.name;
+        btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200';
+        btn.onclick = () => {
+          userSelect.value = user.name;
+        };
+        userList.appendChild(btn);
+
+        const option = document.createElement('option');
+        option.value = user.name;
+        option.textContent = user.name;
+        userSelect.appendChild(option);
+      });
+    }
+
+    loadUsers();
   </script>
 </body>
 </html>

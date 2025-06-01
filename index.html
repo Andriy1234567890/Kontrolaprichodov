@@ -178,47 +178,37 @@
   const dateStr = now.toISOString().split('T')[0];
 
   try {
+    // Спробуємо отримати запис на сьогодні без .single(), щоб уникнути помилки, якщо немає запису
+    const { data: records, error: selectErr } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('username', currentUser.name)
+      .eq('date', dateStr);
+
+    if (selectErr) {
+      alert('Помилка при отриманні запису приходу');
+      console.error(selectErr);
+      return;
+    }
+
+    const existing = records.length > 0 ? records[0] : null;
+
     if (type === 'in') {
-      // Перевіряємо, чи є вже запис на сьогодні
-      const { data: existing, error: selectErr } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('username', currentUser.name)
-        .eq('date', dateStr)
-        .single();
-
-      if (selectErr && selectErr.code !== 'PGRST116') {
-        alert('Помилка при отриманні запису приходу');
-        return;
-      }
-
       if (existing) {
-        // Якщо вже є запис з приходом, можемо оновити time_in (або нічого не робити)
+        // Оновлюємо час приходу
         await supabase
           .from('attendance')
           .update({ time_in: now.toISOString() })
           .eq('id', existing.id);
       } else {
-        // Якщо запису немає, додаємо новий з часом приходу
+        // Додаємо новий запис
         await supabase
           .from('attendance')
           .insert([{ username: currentUser.name, date: dateStr, time_in: now.toISOString() }]);
       }
     } else if (type === 'out') {
-      // Оновлюємо час відходу, якщо є запис на сьогодні
-      const { data: existing, error: selectErr } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('username', currentUser.name)
-        .eq('date', dateStr)
-        .single();
-
-      if (selectErr) {
-        alert('Помилка при пошуку запису для відходу');
-        return;
-      }
-
       if (existing) {
+        // Оновлюємо час відходу
         await supabase
           .from('attendance')
           .update({ time_out: now.toISOString() })
@@ -230,12 +220,14 @@
           .insert([{ username: currentUser.name, date: dateStr, time_out: now.toISOString() }]);
       }
     }
-    await loadHistory(); // Оновлюємо історію після зміни
+
+    await loadHistory(); // оновлення історії
   } catch (error) {
     console.error('Помилка відмітки часу:', error);
     alert('Сталася помилка, спробуйте ще раз');
   }
 }
+
 
 
   // Збереження чайових

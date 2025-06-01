@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="uk">
 <head>
   <meta charset="UTF-8" />
@@ -81,6 +81,24 @@
     </div>
   </div>
 
+  <!-- Адміністраторський звіт -->
+  <div id="admin-report" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white p-6 rounded w-full max-w-3xl max-h-[90vh] overflow-auto">
+      <h2 class="text-xl font-bold mb-4">Звіт адміністратора</h2>
+      <table class="min-w-full border">
+        <thead>
+          <tr>
+            <th class="border px-4 py-2">Ім'я</th>
+            <th class="border px-4 py-2">Години</th>
+            <th class="border px-4 py-2">Чайові (€)</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body"></tbody>
+      </table>
+      <button onclick="document.getElementById('admin-report').classList.add('hidden')" class="mt-4 bg-gray-300 px-4 py-2 rounded">Закрити</button>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const supabaseUrl = 'https://ygxsphldpwfwfwbeulot.supabase.co';
@@ -106,17 +124,31 @@
       userList.appendChild(btn);
     });
 
-    function selectUser(index) {
-  currentUser = workers[index];
-  document.getElementById('login-section').classList.remove('hidden');
-  document.getElementById('attendance-section').classList.add('hidden');
-  document.getElementById('user-name').textContent = currentUser.name;
+    // Додаємо кнопку Адміністратор
+    const adminBtn = document.createElement('button');
+    adminBtn.textContent = 'Адміністратор';
+    adminBtn.className = 'block w-full text-left px-4 py-2 bg-red-100 hover:bg-red-200 rounded';
+    adminBtn.onclick = () => {
+      const pass = prompt('Введіть пароль адміністратора:');
+      if (pass === 'admin123') {
+        showAdminReport();
+      } else {
+        alert('Невірний пароль!');
+      }
+    };
+    userList.appendChild(adminBtn);
 
-  // Закриття меню на мобільному
-  if (window.innerWidth < 768) {
-    document.getElementById('sidebar').classList.add('-translate-x-full');
-  }
-}
+    function selectUser(index) {
+      currentUser = workers[index];
+      document.getElementById('login-section').classList.remove('hidden');
+      document.getElementById('attendance-section').classList.add('hidden');
+      document.getElementById('user-name').textContent = currentUser.name;
+
+      // Закриття меню на мобільному
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+      }
+    }
 
 
     document.getElementById('login-btn').addEventListener('click', () => {
@@ -188,106 +220,3 @@
         .eq('name', currentUser.name)
         .single();
       const { data: attendance } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('worker_id', worker.id)
-        .order('date', { ascending: false });
-
-      const { data: tips } = await supabase
-        .from('tips')
-        .select('*')
-        .eq('worker_id', worker.id);
-
-      const table = document.getElementById('history-table');
-      table.innerHTML = '';
-
-      let totalMinutes = 0;
-      attendance.forEach((entry) => {
-        const tip = tips.find((t) => t.date === entry.date);
-        const arrival = entry.arrival_time || '';
-        const departure = entry.departure_time || '';
-
-        let minutes = 0;
-        if (arrival && departure) {
-          const [h1, m1] = arrival.split(':').map(Number);
-          const [h2, m2] = departure.split(':').map(Number);
-          minutes = h2 * 60 + m2 - (h1 * 60 + m1);
-          totalMinutes += minutes;
-        }
-
-        table.innerHTML += `
-          <tr data-id="${entry.id}">
-            <td class="border px-4 py-2">${entry.date}</td>
-            <td class="border px-4 py-2">
-              <input type="time" value="${arrival}" class="arrival-input border rounded px-2 py-1 w-24" />
-            </td>
-            <td class="border px-4 py-2">
-              <input type="time" value="${departure}" class="departure-input border rounded px-2 py-1 w-24" />
-            </td>
-            <td class="border px-4 py-2">${tip ? tip.amount.toFixed(2) : '-'}</td>
-            <td class="border px-4 py-2 space-x-1">
-              <button class="save-btn bg-green-500 text-white px-2 py-1 rounded">Uložiť</button>
-              <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Odstrániť</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      const hours = Math.floor(totalMinutes / 60);
-      const mins = totalMinutes % 60;
-      document.getElementById('total-time').textContent = `${hours} год ${mins} хв`;
-
-      // Додаємо обробники кнопок Зберегти і Видалити
-      addActionListeners();
-    }
-
-    function addActionListeners() {
-      const table = document.getElementById('history-table');
-
-      table.querySelectorAll('.save-btn').forEach((btn) => {
-        btn.onclick = async () => {
-          const row = btn.closest('tr');
-          const id = row.dataset.id;
-          const arrival = row.querySelector('.arrival-input').value;
-          const departure = row.querySelector('.departure-input').value;
-
-          // Перевірка коректності часу (простіша)
-          if (arrival && departure && departure <= arrival) {
-            return alert('Čas odchodu musí byť neskorší ako čas príchodu!');
-          }
-
-          const { error } = await supabase
-            .from('attendance')
-            .update({ arrival_time: arrival, departure_time: departure })
-            .eq('id', id);
-
-          if (error) return alert('Chyba pri aktualizácii záznamu.');
-
-          alert('Záznam bol aktualizovaný');
-          loadHistory();
-        };
-      });
-
-      table.querySelectorAll('.delete-btn').forEach((btn) => {
-        btn.onclick = async () => {
-          const row = btn.closest('tr');
-          const id = row.dataset.id;
-
-          if (!confirm('Naozaj chcete odstrániť tento záznam?')) return;
-
-          const { error } = await supabase.from('attendance').delete().eq('id', id);
-
-          if (error) return alert('Chyba pri odstraňovaní záznamu.');
-
-          alert('Запис видалено');
-          loadHistory();
-        };
-      });
-    }
-
-    document.getElementById('menu-btn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    });
-  </script>
-</body>
-</html>

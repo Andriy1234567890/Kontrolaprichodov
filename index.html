@@ -173,37 +173,70 @@
   document.getElementById('out-btn').addEventListener('click', () => markAttendance('out'));
 
   async function markAttendance(type) {
-    if (!currentUser) return;
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
+  if (!currentUser) return;
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
 
+  try {
     if (type === 'in') {
-      await supabase
+      // Перевіряємо, чи є вже запис на сьогодні
+      const { data: existing, error: selectErr } = await supabase
         .from('attendance')
-        .insert([{ username: currentUser.name, date: dateStr, time_in: now.toISOString() }]);
-    } else {
-      // Оновити існуючий запис для сьогоднішньої дати
-      const { data, error } = await supabase
-        .from('attendance')
-        .select('id, time_out')
+        .select('*')
         .eq('username', currentUser.name)
         .eq('date', dateStr)
         .single();
 
-      if (data) {
+      if (selectErr && selectErr.code !== 'PGRST116') {
+        alert('Помилка при отриманні запису приходу');
+        return;
+      }
+
+      if (existing) {
+        // Якщо вже є запис з приходом, можемо оновити time_in (або нічого не робити)
+        await supabase
+          .from('attendance')
+          .update({ time_in: now.toISOString() })
+          .eq('id', existing.id);
+      } else {
+        // Якщо запису немає, додаємо новий з часом приходу
+        await supabase
+          .from('attendance')
+          .insert([{ username: currentUser.name, date: dateStr, time_in: now.toISOString() }]);
+      }
+    } else if (type === 'out') {
+      // Оновлюємо час відходу, якщо є запис на сьогодні
+      const { data: existing, error: selectErr } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('username', currentUser.name)
+        .eq('date', dateStr)
+        .single();
+
+      if (selectErr) {
+        alert('Помилка при пошуку запису для відходу');
+        return;
+      }
+
+      if (existing) {
         await supabase
           .from('attendance')
           .update({ time_out: now.toISOString() })
-          .eq('id', data.id);
+          .eq('id', existing.id);
       } else {
-        // Якщо не було часу приходу, додаємо новий запис з time_out
+        // Якщо запису немає, створюємо новий тільки з часом відходу
         await supabase
           .from('attendance')
           .insert([{ username: currentUser.name, date: dateStr, time_out: now.toISOString() }]);
       }
     }
-    loadHistory();
+    await loadHistory(); // Оновлюємо історію після зміни
+  } catch (error) {
+    console.error('Помилка відмітки часу:', error);
+    alert('Сталася помилка, спробуйте ще раз');
   }
+}
+
 
   // Збереження чайових
   document.getElementById('save-tips').addEventListener('click', async () => {

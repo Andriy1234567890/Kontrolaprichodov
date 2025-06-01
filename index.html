@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Контроль відвідування</title>
+  <title>Контроль відвідування / Kontrola dochádzky</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex">
+
   <!-- Sidebar -->
   <div
     id="sidebar"
     class="bg-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out shadow-md z-30"
   >
-    <h2 class="text-xl font-bold px-4">Працівники</h2>
+    <h2 class="text-xl font-bold px-4">Працівники / Zamestnanci</h2>
     <nav id="user-list"></nav>
   </div>
 
@@ -24,71 +26,69 @@
     >
       Menu
     </button>
-    <h1 class="text-2xl font-bold mb-4">Kontrola dochádzky</h1>
+    <h1 class="text-2xl font-bold mb-4">Kontrola dochádzky / Контроль відвідування</h1>
 
-    <div id="login-section" class="space-y-4 hidden">
+    <!-- Login section -->
+    <div id="login-section" class="space-y-4 hidden max-w-sm">
       <input
         type="password"
         id="password-input"
-        placeholder="Zadajte svoje heslo"
-        class="border p-2 rounded w-full max-w-sm"
+        placeholder="Zadajte svoje heslo / Введіть пароль"
+        class="border p-2 rounded w-full"
       />
-      <button id="login-btn" class="bg-blue-500 text-white px-4 py-2 rounded">
-        Prihláste sa
+      <button id="login-btn" class="bg-blue-500 text-white px-4 py-2 rounded w-full">
+        Prihláste sa / Увійти
       </button>
     </div>
 
-    <div id="attendance-section" class="hidden space-y-4">
+    <!-- User attendance section -->
+    <div id="attendance-section" class="hidden space-y-4 max-w-3xl">
       <p id="user-name" class="text-lg font-semibold"></p>
-      <button id="in-btn" class="bg-green-500 text-white px-4 py-2 rounded">
-        Prichod
-      </button>
-      <button id="out-btn" class="bg-red-500 text-white px-4 py-2 rounded">
-        Odchod
-      </button>
+      <div class="space-x-2">
+        <button id="in-btn" class="bg-green-500 text-white px-4 py-2 rounded">Prichod / Прихід</button>
+        <button id="out-btn" class="bg-red-500 text-white px-4 py-2 rounded">Odchod / Відхід</button>
+      </div>
 
-      <div class="mt-4">
-        <label for="tips-input" class="block font-medium">Tringle:</label>
+      <div class="mt-4 max-w-xs">
+        <label for="tips-input" class="block font-medium">Tringle / Чайові (€):</label>
         <input
           type="number"
           id="tips-input"
           placeholder="Suma v €"
-          class="border p-2 rounded w-full max-w-xs"
+          class="border p-2 rounded w-full"
         />
-        <button id="save-tips" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded">
-          Uložiť tringle
-        </button>
+        <button id="save-tips" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded w-full">Uložiť tringle / Зберегти чайові</button>
       </div>
 
-      <div class="mt-6">
-        <h2 class="text-xl font-bold mb-2">Historia</h2>
-        <table class="min-w-full bg-white border rounded">
+      <div class="mt-6 overflow-auto">
+        <h2 class="text-xl font-bold mb-2">Historia / Історія</h2>
+        <table class="min-w-full bg-white border rounded text-center">
           <thead>
             <tr>
-              <th class="border px-4 py-2">Data</th>
-              <th class="border px-4 py-2">Čas príchodu</th>
-              <th class="border px-4 py-2">Čas odchodu</th>
-              <th class="border px-4 py-2">Tringle (€)</th>
-              <th class="border px-4 py-2">Дії</th>
+              <th class="border px-4 py-2">Data / Дата</th>
+              <th class="border px-4 py-2">Čas príchodu / Час приходу</th>
+              <th class="border px-4 py-2">Čas odchodu / Час відходу</th>
+              <th class="border px-4 py-2">Tringle (€) / Чайові (€)</th>
+              <th class="border px-4 py-2">Дії / Akcie</th>
             </tr>
           </thead>
           <tbody id="history-table"></tbody>
         </table>
         <p class="mt-4 font-bold">
-          Celkový čas: <span id="total-time">0 год</span>
+          Celkový čas / Загальний час: <span id="total-time">0 год</span>
         </p>
       </div>
     </div>
 
-    <!-- Контейнер для звіту адміністратора -->
+    <!-- Admin report section -->
     <div id="admin-report" class="hidden mt-6 bg-white p-4 rounded shadow max-w-3xl overflow-auto">
-      <h2 class="text-xl font-bold mb-4">Звіт адміністратора за поточний місяць</h2>
-      <table class="min-w-full border rounded">
+      <h2 class="text-xl font-bold mb-4">Звіт адміністратора / Správa administrátora za aktuálny mesiac</h2>
+      <table class="min-w-full border rounded text-center">
         <thead>
           <tr>
-            <th class="border px-4 py-2">Ім'я</th>
-            <th class="border px-4 py-2">Години</th>
-            <th class="border px-4 py-2">Чайові (€)</th>
+            <th class="border px-4 py-2">Ім'я / Meno</th>
+            <th class="border px-4 py-2">Години / Hodiny</th>
+            <th class="border px-4 py-2">Чайові (€) / Tringle (€)</th>
           </tr>
         </thead>
         <tbody id="admin-report-body"></tbody>
@@ -96,259 +96,269 @@
     </div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabaseUrl = 'https://ygxsphldpwfwfwbeulot.supabase.co';
-    const supabaseKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlneHNwaGxkcHdmd2Z3YmV1bG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1OTUzOTcsImV4cCI6MjA2NDE3MTM5N30.rKSGZVolDLyFbMJZsDqw2fiKOCIDHpuA34_XmGG8j_A';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const workers = [
-      { name: 'Andrii Chovban', password: '2741' },
-      { name: 'Anna Pohlodkova', password: '2424' },
-      { name: 'Anastasiia Senyshyna', password: '8901' },
-      { name: 'Kristina Tovt', password: '0000' },
-    ];
+  const supabaseUrl = 'https://ygxsphldpwfwfwbeulot.supabase.co';
+  const supabaseKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlneHNwaGxkcHdmd2Z3YmV1bG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1OTUzOTcsImV4cCI6MjA2NDE3MTM5N30.rKSGZVolDLyFbMJZsDqw2fiKOCIDHpuA34_XmGG8j_A';
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let currentUser = null;
+  // Працівники / Zamestnanci
+  const workers = [
+    { name: 'Andrii Chovban', password: '2741' },
+    { name: 'Anna Pohlodkova', password: '2424' },
+    { name: 'Anastasiia Senyshyna', password: '8901' },
+    { name: 'Kristina Tovt', password: '0000' },
+  ];
 
-    const userList = document.getElementById('user-list');
-    userList.innerHTML = ''; // Очистка списку
+  let currentUser = null;
 
-    // Додаємо працівників у sidebar
-    workers.forEach((user, index) => {
-      const btn = document.createElement('button');
-      btn.textContent = user.name;
-      btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200 rounded';
-      btn.onclick = () => selectUser(index);
-      userList.appendChild(btn);
-    });
+  const userList = document.getElementById('user-list');
+  userList.innerHTML = '';
 
-    // Додаємо кнопку Адміністратор
-    const adminBtn = document.createElement('button');
-    adminBtn.textContent = 'Адміністратор';
-    adminBtn.className = 'block w-full text-left px-4 py-2 bg-red-100 hover:bg-red-200 rounded mt-4';
-    adminBtn.onclick = async () => {
-      const pass = prompt('Введіть пароль адміністратора:');
-      if (pass === 'admin123') {
-        await showAdminReport();
-      } else {
-        alert('Невірний пароль!');
-      }
-    };
-    userList.appendChild(adminBtn);
+  // Додаємо кнопки працівників
+  workers.forEach((user, index) => {
+    const btn = document.createElement('button');
+    btn.textContent = user.name;
+    btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200 rounded';
+    btn.onclick = () => selectUser(index);
+    userList.appendChild(btn);
+  });
 
-    function selectUser(index) {
-      currentUser = workers[index];
-      document.getElementById('login-section').classList.remove('hidden');
-      document.getElementById('attendance-section').classList.add('hidden');
-      document.getElementById('user-name').textContent = currentUser.name;
+  // Кнопка адміністратора
+  const adminBtn = document.createElement('button');
+  adminBtn.textContent = 'Адміністратор / Administrátor';
+  adminBtn.className = 'block w-full text-left px-4 py-2 bg-red-100 hover:bg-red-200 rounded mt-4';
+  adminBtn.onclick = async () => {
+    const pass = prompt('Введіть пароль адміністратора / Zadajte heslo administrátora:');
+    if (pass === 'admin123') {
+      await showAdminReport();
+    } else {
+      alert('Невірний пароль! / Nesprávne heslo!');
+    }
+  };
+  userList.appendChild(adminBtn);
 
-      // Закриття меню на мобільному
-      if (window.innerWidth < 768) {
-        document.getElementById('sidebar').classList.add('-translate-x-full');
-      }
+  // Вибір користувача
+  function selectUser(index) {
+    currentUser = workers[index];
+    document.getElementById('login-section').classList.remove('hidden');
+    document.getElementById('attendance-section').classList.add('hidden');
+    document.getElementById('user-name').textContent = currentUser.name;
 
-      // При виборі користувача ховаємо адмін-звіт, якщо він відкритий
-      document.getElementById('admin-report').classList.add('hidden');
+    // Закрити sidebar на мобільних
+    if (window.innerWidth < 768) {
+      document.getElementById('sidebar').classList.add('-translate-x-full');
     }
 
-    document.getElementById('login-btn').addEventListener('click', () => {
-      const inputPass = document.getElementById('password-input').value;
-      if (currentUser && inputPass === currentUser.password) {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('attendance-section').classList.remove('hidden');
-        loadHistory();
-      } else {
-        alert('Невірний пароль!');
-      }
-    });
+    // Сховати адмін-звіт
+    document.getElementById('admin-report').classList.add('hidden');
+  }
 
-    document.getElementById('in-btn').addEventListener('click', () => markTime('in'));
-    document.getElementById('out-btn').addEventListener('click', () => markTime('out'));
-
-    async function markTime(type) {
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0];
-      const timeStr = today.toTimeString().split(' ')[0];
-
-      const { data: worker, error: errW } = await supabase
-        .from('workers')
-        .select('id')
-        .eq('name', currentUser.name)
-        .single();
-      if (errW || !worker) return alert('Користувача не знайдено в базі.');
-
-      const { data: existing, error: errE } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('worker_id', worker.id)
-        .eq('date', dateStr)
-        .maybeSingle();
-
-      if (errE) return alert('Помилка при перевірці запису.');
-
-      if (existing) {
-        const update = type === 'in' ? { arrival_time: timeStr } : { departure_time: timeStr };
-        await supabase.from('attendance').update(update).eq('id', existing.id);
-      } else {
-        const insert =
-          type === 'in'
-            ? { worker_id: worker.id, date: dateStr, arrival_time: timeStr }
-            : { worker_id: worker.id, date: dateStr, departure_time: timeStr };
-        await supabase.from('attendance').insert([insert]);
-      }
-
-      alert(`${type === 'in' ? 'Прихід' : 'Відхід'} відзначено.`);
-      loadHistory();
-    }
-
-    document.getElementById('save-tips').addEventListener('click', async () => {
-      const amount = parseFloat(document.getElementById('tips-input').value);
-      if (isNaN(amount) || amount < 0) {
-        return alert('Введіть правильну суму чайових.');
-      }
-
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0];
-
-      const { data: worker, error: errW } = await supabase
-        .from('workers')
-        .select('id')
-        .eq('name', currentUser.name)
-        .single();
-      if (errW || !worker) return alert('Користувача не знайдено в базі.');
-
-      await supabase
-        .from('tips')
-        .insert([{ worker_id: worker.id, date: dateStr, amount }]);
-
-      alert('Чайові збережено.');
-      document.getElementById('tips-input').value = '';
-      loadHistory();
-    });
-
-    async function loadHistory() {
-      if (!currentUser) return;
-
-      const { data: worker, error: errW } = await supabase
-        .from('workers')
-        .select('id')
-        .eq('name', currentUser.name)
-        .single();
-      if (errW || !worker) return alert('Користувача не знайдено в базі.');
-
-      const { data: attendance, error: errA } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('worker_id', worker.id)
-        .order('date', { ascending: false });
-
-      if (errA) return alert('Помилка при завантаженні історії.');
-
-      const { data: tipsData } = await supabase
-        .from('tips')
-        .select('date, amount')
-        .eq('worker_id', worker.id);
-
-      const historyTable = document.getElementById('history-table');
-      historyTable.innerHTML = '';
-
-      let totalMinutes = 0;
-      attendance.forEach((entry) => {
-        const tipEntry = tipsData.find(t => t.date === entry.date);
-        const tipAmount = tipEntry ? tipEntry.amount : 0;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="border px-4 py-2">${entry.date}</td>
-          <td class="border px-4 py-2">${entry.arrival_time || '-'}</td>
-          <td class="border px-4 py-2">${entry.departure_time || '-'}</td>
-          <td class="border px-4 py-2">${tipAmount}</td>
-          <td class="border px-4 py-2">
-            <button class="text-red-500" onclick="deleteEntry(${entry.id})">Видалити</button>
-          </td>
-        `;
-        historyTable.appendChild(tr);
-
-        if (entry.arrival_time && entry.departure_time) {
-          const [h1, m1] = entry.arrival_time.split(':').map(Number);
-          const [h2, m2] = entry.departure_time.split(':').map(Number);
-          totalMinutes += (h2 * 60 + m2) - (h1 * 60 + m1);
-        }
-      });
-
-      document.getElementById('total-time').textContent = Math.floor(totalMinutes / 60) + ' год';
-    }
-
-    window.deleteEntry = async function (id) {
-      if (confirm('Видалити цей запис?')) {
-        await supabase.from('attendance').delete().eq('id', id);
-        loadHistory();
-      }
-    };
-
-    async function showAdminReport() {
-      const now = new Date();
-      const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-      const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
-
-      // Отримуємо всіх працівників з бази
-      const { data: workersData, error: errW } = await supabase.from('workers').select('id, name');
-      if (errW) return alert('Помилка при завантаженні працівників');
-
-      const tbody = document.getElementById('admin-report-body');
-      tbody.innerHTML = '';
-
-      for (const w of workersData) {
-        const { data: attendanceData, error: errA } = await supabase
-          .from('attendance')
-          .select('arrival_time, departure_time, date')
-          .eq('worker_id', w.id)
-          .gte('date', startMonth)
-          .lte('date', endMonth);
-        if (errA) return alert('Помилка при завантаженні відвідування');
-
-        let totalMinutes = 0;
-        attendanceData.forEach(entry => {
-          if (entry.arrival_time && entry.departure_time) {
-            const [h1, m1] = entry.arrival_time.split(':').map(Number);
-            const [h2, m2] = entry.departure_time.split(':').map(Number);
-            totalMinutes += (h2 * 60 + m2) - (h1 * 60 + m1);
-          }
-        });
-        const hours = (totalMinutes / 60).toFixed(2);
-
-        const { data: tipsData, error: errT } = await supabase
-          .from('tips')
-          .select('amount')
-          .eq('worker_id', w.id)
-          .gte('date', startMonth)
-          .lte('date', endMonth);
-        if (errT) return alert('Помилка при завантаженні чайових');
-
-        const totalTips = tipsData.reduce((acc, cur) => acc + cur.amount, 0).toFixed(2);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="border px-4 py-2">${w.name}</td>
-          <td class="border px-4 py-2">${hours}</td>
-          <td class="border px-4 py-2">${totalTips}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-
-      // Показати звіт
-      document.getElementById('admin-report').classList.remove('hidden');
-      // Сховати секцію користувача, щоб не плутати
-      document.getElementById('attendance-section').classList.add('hidden');
+  // Логін користувача
+  document.getElementById('login-btn').addEventListener('click', () => {
+    const inputPass = document.getElementById('password-input').value;
+    if (currentUser && inputPass === currentUser.password) {
       document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('attendance-section').classList.remove('hidden');
+      loadHistory();
+    } else {
+      alert('Невірний пароль! / Nesprávne heslo!');
     }
+  });
 
-    // Меню на мобільних
-    document.getElementById('menu-btn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  // Відмітка приходу / відходу
+  document.getElementById('in-btn').addEventListener('click', () => markAttendance('in'));
+  document.getElementById('out-btn').addEventListener('click', () => markAttendance('out'));
+
+  async function markAttendance(type) {
+    if (!currentUser) return;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+
+    if (type === 'in') {
+      await supabase
+        .from('attendance')
+        .insert([{ username: currentUser.name, date: dateStr, time_in: now.toISOString() }]);
+    } else {
+      // Оновити існуючий запис для сьогоднішньої дати
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('id, time_out')
+        .eq('username', currentUser.name)
+        .eq('date', dateStr)
+        .single();
+
+      if (data) {
+        await supabase
+          .from('attendance')
+          .update({ time_out: now.toISOString() })
+          .eq('id', data.id);
+      } else {
+        // Якщо не було часу приходу, додаємо новий запис з time_out
+        await supabase
+          .from('attendance')
+          .insert([{ username: currentUser.name, date: dateStr, time_out: now.toISOString() }]);
+      }
+    }
+    loadHistory();
+  }
+
+  // Збереження чайових
+  document.getElementById('save-tips').addEventListener('click', async () => {
+    const tips = Number(document.getElementById('tips-input').value);
+    if (isNaN(tips) || tips < 0) {
+      alert('Введіть правильну суму чайових / Zadajte správnu sumu tringlov');
+      return;
+    }
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    // Зберігаємо чайові в таблицю tips
+    const { data, error } = await supabase
+      .from('tips')
+      .select('id')
+      .eq('username', currentUser.name)
+      .eq('date', dateStr)
+      .single();
+
+    if (data) {
+      await supabase.from('tips').update({ amount: tips }).eq('id', data.id);
+    } else {
+      await supabase.from('tips').insert([{ username: currentUser.name, date: dateStr, amount: tips }]);
+    }
+    alert('Чайові збережено / Tringle uložené');
+    loadHistory();
+  });
+
+  // Завантаження історії відвідувань користувача
+  async function loadHistory() {
+    if (!currentUser) return;
+
+    const { data: attendanceData } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('username', currentUser.name)
+      .order('date', { ascending: false });
+
+    const { data: tipsData } = await supabase
+      .from('tips')
+      .select('*')
+      .eq('username', currentUser.name);
+
+    const historyTable = document.getElementById('history-table');
+    historyTable.innerHTML = '';
+
+    let totalMinutes = 0;
+
+    attendanceData.forEach((record) => {
+      const tipRecord = tipsData.find(t => t.date === record.date);
+      const timeIn = record.time_in ? new Date(record.time_in) : null;
+      const timeOut = record.time_out ? new Date(record.time_out) : null;
+
+      let durationMinutes = 0;
+      if (timeIn && timeOut) {
+        durationMinutes = (timeOut - timeIn) / 60000;
+        totalMinutes += durationMinutes;
+      }
+
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td class="border px-4 py-2">${record.date}</td>
+        <td class="border px-4 py-2">${timeIn ? timeIn.toLocaleTimeString() : ''}</td>
+        <td class="border px-4 py-2">${timeOut ? timeOut.toLocaleTimeString() : ''}</td>
+        <td class="border px-4 py-2">${tipRecord ? tipRecord.amount.toFixed(2) : '0.00'}</td>
+        <td class="border px-4 py-2">
+          <button class="text-red-500 hover:underline" data-id="${record.id}" onclick="deleteAttendance(this)">Видалити / Odstrániť</button>
+        </td>
+      `;
+      historyTable.appendChild(tr);
     });
-  </script>
+
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = Math.floor(totalMinutes % 60);
+    document.getElementById('total-time').textContent = `${hours} год ${mins} хв`;
+  }
+
+  // Видалення запису відвідування
+  window.deleteAttendance = async function(btn) {
+    const id = btn.getAttribute('data-id');
+    if (confirm('Видалити цей запис? / Odstrániť tento záznam?')) {
+      await supabase.from('attendance').delete().eq('id', id);
+      loadHistory();
+    }
+  };
+
+  // Звіт адміністратора
+  async function showAdminReport() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('attendance-section').classList.add('hidden');
+    document.getElementById('admin-report').classList.remove('hidden');
+
+    // Отримуємо всі записи поточного місяця
+    const now = new Date();
+    const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
+
+    // Запити для працівників
+    const { data: attendanceData } = await supabase
+      .from('attendance')
+      .select('*')
+      .like('date', `${monthStr}%`);
+
+    const { data: tipsData } = await supabase
+      .from('tips')
+      .select('*')
+      .like('date', `${monthStr}%`);
+
+    // Підрахунок годин і чайових по кожному працівнику
+    const report = {};
+
+    attendanceData.forEach((rec) => {
+      if (!report[rec.username]) {
+        report[rec.username] = { minutes: 0, tips: 0 };
+      }
+      const timeIn = rec.time_in ? new Date(rec.time_in) : null;
+      const timeOut = rec.time_out ? new Date(rec.time_out) : null;
+
+      if (timeIn && timeOut) {
+        const diffMin = (timeOut - timeIn) / 60000;
+        report[rec.username].minutes += diffMin;
+      }
+    });
+
+    tipsData.forEach((tip) => {
+      if (report[tip.username]) {
+        report[tip.username].tips += tip.amount;
+      }
+    });
+
+    // Відобразити звіт у таблиці
+    const tbody = document.getElementById('admin-report-body');
+    tbody.innerHTML = '';
+
+    for (const [username, data] of Object.entries(report)) {
+      const hours = Math.floor(data.minutes / 60);
+      const mins = Math.floor(data.minutes % 60);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-4 py-2">${username}</td>
+        <td class="border px-4 py-2">${hours} год ${mins} хв</td>
+        <td class="border px-4 py-2">${data.tips.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Кнопка меню для мобільних
+  document.getElementById('menu-btn').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  });
+
+  // При завантаженні сторінки вибір користувача не показаний
+  document.getElementById('login-section').classList.add('hidden');
+  document.getElementById('attendance-section').classList.add('hidden');
+  document.getElementById('admin-report').classList.add('hidden');
+</script>
 </body>
 </html>

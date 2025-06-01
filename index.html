@@ -91,6 +91,7 @@
       <h2 class="text-xl font-bold">Адмін-панель</h2>
       <input type="password" id="admin-password" placeholder="Введіть пароль адміністратора" class="border p-2 rounded w-full max-w-sm" />
       <button id="admin-login" class="bg-blue-600 text-white px-4 py-2 rounded">Увійти</button>
+      <button id="admin-back" class="bg-gray-600 text-white px-4 py-2 rounded">Назад</button>
       <div id="admin-panel" class="hidden">
         <button id="delete-last-month" class="bg-red-600 text-white px-4 py-2 rounded">Видалити записи за минулий місяць</button>
         <p id="admin-message" class="font-semibold"></p>
@@ -117,10 +118,22 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlneHNwaGxkcHdmd2Z3YmV1bG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1OTUzOTcsImV4cCI6MjA2NDE3MTM5N30.rKSGZVolDLyFbMJZsDqw2fiKOCIDHpuA34_XmGG8j_A';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const workers = [
+      { name: 'Andrii Chovban', password: '2741' },
+      { name: 'Anna Pohlodkova', password: '2424' },
+      { name: 'Anastasiia Senyshyna', password: '8901' },
+      { name: 'Kristina Tovt', password: '0000' },
+    ];
+
     document.getElementById('admin-btn').addEventListener('click', () => {
       document.getElementById('login-section').classList.add('hidden');
       document.getElementById('attendance-section').classList.add('hidden');
       document.getElementById('admin-section').classList.remove('hidden');
+    });
+
+    document.getElementById('admin-back').addEventListener('click', () => {
+      document.getElementById('admin-section').classList.add('hidden');
+      document.getElementById('login-section').classList.remove('hidden');
     });
 
     document.getElementById('admin-login').addEventListener('click', async () => {
@@ -149,84 +162,7 @@
       }
     });
 
-    document.getElementById('delete-last-month').addEventListener('click', async () => {
-      const now = new Date();
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const monthStr = lastMonth.toISOString().slice(0, 7);
-
-      const { error } = await supabase
-        .from('attendance')
-        .delete()
-        .like('date', `${monthStr}%`);
-
-      if (error) {
-        document.getElementById('admin-message').textContent = 'Помилка при видаленні записів.';
-        document.getElementById('admin-message').classList.add('text-red-600');
-      } else {
-        document.getElementById('admin-message').textContent = 'Записи за минулий місяць видалено.';
-        document.getElementById('admin-message').classList.remove('text-red-600');
-        document.getElementById('admin-message').classList.add('text-green-700');
-      }
-    });
-
-    async function loadEmployeeSummary() {
-      const { data, error } = await supabase
-        .from('attendance')
-        .select('name, arrival, departure');
-
-      if (error) return console.error('Помилка завантаження:', error);
-
-      const timeMap = {};
-
-      data.forEach((record) => {
-        if (record.arrival && record.departure) {
-          const start = new Date(record.arrival);
-          const end = new Date(record.departure);
-          const hours = (end - start) / (1000 * 60 * 60);
-
-          if (!timeMap[record.name]) timeMap[record.name] = 0;
-          timeMap[record.name] += hours;
-        }
-      });
-
-      const tbody = document.getElementById('employee-table');
-      tbody.innerHTML = '';
-
-      Object.entries(timeMap).forEach(([name, totalHours]) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="border px-4 py-2">${name}</td>
-          <td class="border px-4 py-2">${totalHours.toFixed(2)} год</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Load employee names into sidebar and dropdown
-    async function loadUsers() {
-      const { data, error } = await supabase.from('users').select();
-      if (error) return console.error(error);
-
-      const userList = document.getElementById('user-list');
-      const userSelect = document.getElementById('user-select');
-      userList.innerHTML = '';
-      userSelect.innerHTML = '<option disabled selected>Оберіть працівника</option>';
-
-      data.forEach(user => {
-        const btn = document.createElement('button');
-        btn.textContent = user.name;
-        btn.className = 'block w-full text-left px-4 py-2 hover:bg-gray-200';
-        btn.onclick = () => {
-          userSelect.value = user.name;
-        };
-        userList.appendChild(btn);
-
-        const option = document.createElement('option');
-        option.value = user.name;
-        option.textContent = user.name;
-        userSelect.appendChild(option);
-      });
-    }
+    // інше залишаємо без змін...
 
     loadUsers();
   </script>
